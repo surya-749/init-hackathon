@@ -1,21 +1,112 @@
 "use client";
 
+import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
   const router = useRouter();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const navLinks = [
+    { name: "Dashboard", href: "/dashboard-sim" },
+    { name: "Learn", href: "/learn" },
+    { name: "Marketplace", href: "/marketplace" },
+  ];
 
   return (
     <div className="min-h-screen bg-bg-app flex flex-col">
-      {/* Header */}
-      <header className="p-6">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-            <span className="text-white font-bold text-lg">S</span>
+      {/* Navbar */}
+      <header className="sticky top-0 z-50 bg-bg-app/80 backdrop-blur-lg border-b border-border">
+        <nav className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+              <span className="text-white font-bold text-lg">S</span>
+            </div>
+            <span className="text-text-primary font-semibold text-xl">SafeStart</span>
+          </Link>
+
+          {/* Desktop Nav Links */}
+          <div className="hidden md:flex items-center gap-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                href={link.href}
+                className="px-4 py-2 rounded-lg text-text-secondary text-sm font-medium hover:text-text-primary hover:bg-bg-elevated transition-colors"
+              >
+                {link.name}
+              </Link>
+            ))}
           </div>
-          <span className="text-text-primary font-semibold text-xl">SafeStart</span>
-        </div>
+
+          {/* Desktop Auth Buttons */}
+          <div className="hidden md:flex items-center gap-3">
+            <Link
+              href="/login"
+              className="px-5 py-2 rounded-xl text-text-secondary text-sm font-medium hover:text-text-primary border border-border hover:border-primary transition-colors"
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/login"
+              className="px-5 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-light transition-colors"
+            >
+              Get Started
+            </Link>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors"
+          >
+            {mobileMenuOpen ? (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
+        </nav>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-border bg-bg-card px-6 py-4 space-y-2">
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                href={link.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-4 py-3 rounded-lg text-text-secondary text-sm font-medium hover:text-text-primary hover:bg-bg-elevated transition-colors"
+              >
+                {link.name}
+              </Link>
+            ))}
+            <div className="pt-3 border-t border-border space-y-2">
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block w-full text-center px-4 py-3 rounded-xl text-text-secondary text-sm font-medium border border-border hover:border-primary hover:text-text-primary transition-colors"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block w-full text-center px-4 py-3 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-light transition-colors"
+              >
+                Get Started
+              </Link>
+            </div>
+          </div>
+        )}
       </header>
+
+      <div className="h-4" />
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center justify-center px-6 pb-12">
