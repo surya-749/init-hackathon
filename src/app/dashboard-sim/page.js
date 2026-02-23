@@ -5,7 +5,24 @@ import Link from "next/link";
 import { usePortfolio } from "@/context/PortfolioContext";
 
 export default function SimulationDashboard() {
-  const { portfolio, sellETF, calculateRiskScore, isLoaded, INITIAL_BALANCE } = usePortfolio();
+  const {
+    portfolio,
+    sellETF,
+    calculateRiskScore,
+    isLoaded,
+    INITIAL_BALANCE,
+    switchAccountMode,
+    getActiveBalance,
+    getActiveHoldings,
+    getActiveTransactions,
+    getInitialBalance,
+  } = usePortfolio();
+
+  const accountMode = portfolio.accountMode || "virtual";
+  const activeBalance = getActiveBalance();
+  const activeHoldings = getActiveHoldings();
+  const activeTransactions = getActiveTransactions();
+  const initialBalance = getInitialBalance();
   const [etfPrices, setEtfPrices] = useState({});
   const [isLoadingPrices, setIsLoadingPrices] = useState(true);
   const [aiExplanation, setAiExplanation] = useState(
@@ -38,14 +55,14 @@ export default function SimulationDashboard() {
   }, [fetchPrices]);
 
   // Calculate portfolio value with current prices
-  const holdingsValue = portfolio.holdings.reduce((total, holding) => {
+  const holdingsValue = activeHoldings.reduce((total, holding) => {
     const currentPrice = etfPrices[holding.symbol]?.price || holding.avgPrice;
     return total + currentPrice * holding.quantity;
   }, 0);
 
-  const totalValue = portfolio.virtualBalance + holdingsValue;
-  const totalPnL = totalValue - INITIAL_BALANCE;
-  const pnlPercent = ((totalPnL / INITIAL_BALANCE) * 100).toFixed(2);
+  const totalValue = activeBalance + holdingsValue;
+  const totalPnL = totalValue - initialBalance;
+  const pnlPercent = initialBalance > 0 ? ((totalPnL / initialBalance) * 100).toFixed(2) : "0.00";
 
   const riskScore = calculateRiskScore();
   const riskColor =
@@ -91,9 +108,29 @@ export default function SimulationDashboard() {
               </div>
               <span className="text-text-primary font-semibold">SafeStart</span>
             </Link>
-            <span className="px-2 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
-              Simulation Mode
-            </span>
+            {/* Account Mode Switcher */}
+            <div className="flex items-center gap-1 bg-bg-elevated rounded-full p-1">
+              <button
+                onClick={() => switchAccountMode("virtual")}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                  accountMode === "virtual"
+                    ? "bg-primary text-white"
+                    : "text-text-muted hover:text-text-primary"
+                }`}
+              >
+                Virtual
+              </button>
+              <button
+                onClick={() => switchAccountMode("real")}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                  accountMode === "real"
+                    ? "bg-warning text-white"
+                    : "text-text-muted hover:text-text-primary"
+                }`}
+              >
+                Real
+              </button>
+            </div>
           </div>
           <div className="flex items-center gap-6">
             <nav className="flex items-center gap-6">
@@ -108,9 +145,11 @@ export default function SimulationDashboard() {
               </Link>
             </nav>
             <div className="pl-6 border-l border-border text-right">
-              <p className="text-text-muted text-xs">Virtual Balance</p>
+              <p className="text-text-muted text-xs">
+                {accountMode === "real" ? "Real Balance" : "Virtual Balance"}
+              </p>
               <p className="text-text-primary font-semibold">
-                ₹{portfolio.virtualBalance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                ₹{activeBalance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
               </p>
             </div>
           </div>
@@ -192,7 +231,7 @@ export default function SimulationDashboard() {
                 </Link>
               </div>
               
-              {portfolio.holdings.length === 0 ? (
+              {activeHoldings.length === 0 ? (
                 <div className="text-center py-8">
                   <div className="w-16 h-16 rounded-full bg-bg-elevated mx-auto flex items-center justify-center mb-3">
                     <svg className="w-8 h-8 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -207,7 +246,7 @@ export default function SimulationDashboard() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {portfolio.holdings.map((holding) => {
+                  {activeHoldings.map((holding) => {
                     const currentPrice = etfPrices[holding.symbol]?.price || holding.avgPrice;
                     const currentValue = currentPrice * holding.quantity;
                     const investedValue = holding.avgPrice * holding.quantity;
@@ -268,11 +307,11 @@ export default function SimulationDashboard() {
             {/* Transaction History */}
             <div className="rounded-xl bg-bg-card border border-border p-5">
               <h2 className="text-lg font-semibold text-text-primary mb-4">Recent Transactions</h2>
-              {portfolio.transactions.length === 0 ? (
+              {activeTransactions.length === 0 ? (
                 <p className="text-text-muted text-sm text-center py-4">No transactions yet</p>
               ) : (
                 <div className="space-y-3 max-h-80 overflow-y-auto">
-                  {portfolio.transactions.slice(0, 10).map((tx) => (
+                  {activeTransactions.slice(0, 10).map((tx) => (
                     <div key={tx.id} className="flex items-center gap-3 p-3 rounded-lg bg-bg-elevated">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                         tx.type === "BUY" ? "bg-success/10 text-success" :
@@ -353,11 +392,20 @@ export default function SimulationDashboard() {
                 </div>
 
                 {/* Parent Funding Info */}
-                <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 mt-4">
-                  <p className="text-primary text-sm font-medium mb-1">💰 Virtual Money</p>
+                <div className={`p-3 rounded-lg mt-4 ${
+                  accountMode === "real"
+                    ? "bg-warning/10 border border-warning/20"
+                    : "bg-primary/10 border border-primary/20"
+                }`}>
+                  <p className={`text-sm font-medium mb-1 ${
+                    accountMode === "real" ? "text-warning" : "text-primary"
+                  }`}>
+                    {accountMode === "real" ? "💵 Real Account" : "💰 Virtual Account"}
+                  </p>
                   <p className="text-text-secondary text-xs">
-                    You started with ₹{INITIAL_BALANCE.toLocaleString("en-IN")} virtual money. 
-                    In the future, parents can add real funds through the Parent Portal.
+                    {accountMode === "real"
+                      ? "You are investing real money. Be careful with your trades!"
+                      : `You started with ₹${initialBalance.toLocaleString("en-IN")} virtual money. Switch to Real Account when you're ready.`}
                   </p>
                 </div>
 

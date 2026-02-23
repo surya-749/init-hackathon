@@ -3,23 +3,27 @@
 import { createContext, useContext, useState, useEffect } from "react";
 
 // Initial virtual wallet state
-const INITIAL_BALANCE = 10000; // ₹10,000 virtual starting balance
+const INITIAL_VIRTUAL_BALANCE = 10000; // ₹10,000 virtual starting balance
+const INITIAL_REAL_BALANCE = 0; // ₹0 real starting balance
 
 const initialState = {
-  // Wallet info
-  virtualBalance: INITIAL_BALANCE,
-  initialBalance: INITIAL_BALANCE,
-  
-  // Portfolio holdings
-  holdings: [],
-  
-  // Transaction history
-  transactions: [],
-  
+  // Account mode: "virtual" or "real"
+  accountMode: "virtual",
+
+  // Virtual account
+  virtualBalance: INITIAL_VIRTUAL_BALANCE,
+  virtualHoldings: [],
+  virtualTransactions: [],
+
+  // Real account
+  realBalance: INITIAL_REAL_BALANCE,
+  realHoldings: [],
+  realTransactions: [],
+
   // Parent funding (for future parent portal integration)
   parentFunded: false,
   parentFundedAmount: 0,
-  
+
   // Learning progress
   completedModules: 0,
   riskAssessmentPassed: false,
@@ -35,13 +39,20 @@ export function PortfolioProvider({ children }) {
   // Load from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem("safestart_portfolio");
+    const savedMode = localStorage.getItem("safestart_accountMode");
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        setPortfolio(parsed);
+        setPortfolio((prev) => ({
+          ...prev,
+          ...parsed,
+          accountMode: savedMode || parsed.accountMode || "virtual",
+        }));
       } catch (e) {
         console.error("Failed to load portfolio:", e);
       }
+    } else if (savedMode) {
+      setPortfolio((prev) => ({ ...prev, accountMode: savedMode }));
     }
     setIsLoaded(true);
   }, []);
@@ -53,39 +64,77 @@ export function PortfolioProvider({ children }) {
     }
   }, [portfolio, isLoaded]);
 
+  // Switch account mode
+  const switchAccountMode = (mode) => {
+    setPortfolio((prev) => ({ ...prev, accountMode: mode }));
+    localStorage.setItem("safestart_accountMode", mode);
+  };
+
+  // Get active balance, holdings, transactions based on current mode
+  const getActiveBalance = () =>
+    portfolio.accountMode === "real"
+      ? portfolio.realBalance
+      : portfolio.virtualBalance;
+
+  const getActiveHoldings = () =>
+    portfolio.accountMode === "real"
+      ? portfolio.realHoldings
+      : portfolio.virtualHoldings;
+
+  const getActiveTransactions = () =>
+    portfolio.accountMode === "real"
+      ? portfolio.realTransactions
+      : portfolio.virtualTransactions;
+
+  const getInitialBalance = () =>
+    portfolio.accountMode === "real"
+      ? INITIAL_REAL_BALANCE
+      : INITIAL_VIRTUAL_BALANCE;
+
   // Calculate holdings value (needs current ETF prices)
   const calculateHoldingsValue = (etfPrices) => {
-    return portfolio.holdings.reduce((total, holding) => {
+    const holdings = getActiveHoldings();
+    return holdings.reduce((total, holding) => {
       const price = etfPrices[holding.symbol] || holding.avgPrice;
       return total + price * holding.quantity;
     }, 0);
   };
 
-  // Buy ETF
+  // Buy ETF (works on the active account mode)
   const buyETF = (etf, quantity) => {
     const cost = etf.price * quantity;
-    
-    if (cost > portfolio.virtualBalance) {
+    const balKey =
+      portfolio.accountMode === "real" ? "realBalance" : "virtualBalance";
+    const holdKey =
+      portfolio.accountMode === "real" ? "realHoldings" : "virtualHoldings";
+    const txKey =
+      portfolio.accountMode === "real"
+        ? "realTransactions"
+        : "virtualTransactions";
+
+    if (cost > portfolio[balKey]) {
       return { success: false, error: "Insufficient balance" };
     }
 
-    const existingHolding = portfolio.holdings.find(h => h.symbol === etf.symbol);
-    
+    const holdings = portfolio[holdKey];
+    const existingHolding = holdings.find((h) => h.symbol === etf.symbol);
+
     let newHoldings;
     if (existingHolding) {
-      // Average the price
       const totalQuantity = existingHolding.quantity + quantity;
-      const totalCost = existingHolding.avgPrice * existingHolding.quantity + etf.price * quantity;
+      const totalCost =
+        existingHolding.avgPrice * existingHolding.quantity +
+        etf.price * quantity;
       const newAvgPrice = totalCost / totalQuantity;
-      
-      newHoldings = portfolio.holdings.map(h =>
+
+      newHoldings = holdings.map((h) =>
         h.symbol === etf.symbol
           ? { ...h, quantity: totalQuantity, avgPrice: newAvgPrice }
           : h
       );
     } else {
       newHoldings = [
-        ...portfolio.holdings,
+        ...holdings,
         {
           id: etf.id,
           symbol: etf.symbol,
@@ -110,11 +159,11 @@ export function PortfolioProvider({ children }) {
       timestamp: new Date().toISOString(),
     };
 
-    setPortfolio(prev => ({
+    setPortfolio((prev) => ({
       ...prev,
-      virtualBalance: prev.virtualBalance - cost,
-      holdings: newHoldings,
-      transactions: [newTransaction, ...prev.transactions],
+      [balKey]: prev[balKey] - cost,
+      [holdKey]: newHoldings,
+      [txKey]: [newTransaction, ...prev[txKey]],
     }));
 
     return { success: true, transaction: newTransaction };
@@ -122,12 +171,22 @@ export function PortfolioProvider({ children }) {
 
   // Sell ETF
   const sellETF = (symbol, quantity, currentPrice) => {
-    const holding = portfolio.holdings.find(h => h.symbol === symbol);
-    
+    const holdKey =
+      portfolio.accountMode === "real" ? "realHoldings" : "virtualHoldings";
+    const balKey =
+      portfolio.accountMode === "real" ? "realBalance" : "virtualBalance";
+    const txKey =
+      portfolio.accountMode === "real"
+        ? "realTransactions"
+        : "virtualTransactions";
+
+    const holdings = portfolio[holdKey];
+    const holding = holdings.find((h) => h.symbol === symbol);
+
     if (!holding) {
       return { success: false, error: "Holding not found" };
     }
-    
+
     if (quantity > holding.quantity) {
       return { success: false, error: "Insufficient quantity" };
     }
@@ -138,14 +197,10 @@ export function PortfolioProvider({ children }) {
 
     let newHoldings;
     if (quantity === holding.quantity) {
-      // Sell all
-      newHoldings = portfolio.holdings.filter(h => h.symbol !== symbol);
+      newHoldings = holdings.filter((h) => h.symbol !== symbol);
     } else {
-      // Partial sell
-      newHoldings = portfolio.holdings.map(h =>
-        h.symbol === symbol
-          ? { ...h, quantity: h.quantity - quantity }
-          : h
+      newHoldings = holdings.map((h) =>
+        h.symbol === symbol ? { ...h, quantity: h.quantity - quantity } : h
       );
     }
 
@@ -161,24 +216,49 @@ export function PortfolioProvider({ children }) {
       timestamp: new Date().toISOString(),
     };
 
-    setPortfolio(prev => ({
+    setPortfolio((prev) => ({
       ...prev,
-      virtualBalance: prev.virtualBalance + saleValue,
-      holdings: newHoldings,
-      transactions: [newTransaction, ...prev.transactions],
+      [balKey]: prev[balKey] + saleValue,
+      [holdKey]: newHoldings,
+      [txKey]: [newTransaction, ...prev[txKey]],
     }));
 
     return { success: true, transaction: newTransaction, pnl };
   };
 
-  // Add parent funding (for future parent portal)
-  const addParentFunding = (amount) => {
-    setPortfolio(prev => ({
+  // Add funds to real account
+  const addRealFunds = (amount) => {
+    setPortfolio((prev) => ({
       ...prev,
-      virtualBalance: prev.virtualBalance + amount,
+      realBalance: prev.realBalance + amount,
+      realTransactions: [
+        {
+          id: Date.now(),
+          type: "FUND",
+          source: "Deposit",
+          amount,
+          timestamp: new Date().toISOString(),
+        },
+        ...prev.realTransactions,
+      ],
+    }));
+  };
+
+  // Add parent funding
+  const addParentFunding = (amount) => {
+    const balKey =
+      portfolio.accountMode === "real" ? "realBalance" : "virtualBalance";
+    const txKey =
+      portfolio.accountMode === "real"
+        ? "realTransactions"
+        : "virtualTransactions";
+
+    setPortfolio((prev) => ({
+      ...prev,
+      [balKey]: prev[balKey] + amount,
       parentFunded: true,
       parentFundedAmount: prev.parentFundedAmount + amount,
-      transactions: [
+      [txKey]: [
         {
           id: Date.now(),
           type: "FUND",
@@ -186,14 +266,14 @@ export function PortfolioProvider({ children }) {
           amount,
           timestamp: new Date().toISOString(),
         },
-        ...prev.transactions,
+        ...prev[txKey],
       ],
     }));
   };
 
   // Update learning progress
   const updateProgress = (updates) => {
-    setPortfolio(prev => ({
+    setPortfolio((prev) => ({
       ...prev,
       ...updates,
     }));
@@ -205,15 +285,16 @@ export function PortfolioProvider({ children }) {
     localStorage.removeItem("safestart_portfolio");
   };
 
-  // Calculate portfolio risk score
+  // Calculate portfolio risk score (uses active holdings)
   const calculateRiskScore = () => {
-    if (portfolio.holdings.length === 0) return "Not Invested";
-    
+    const holdings = getActiveHoldings();
+    if (holdings.length === 0) return "Not Invested";
+
     const riskWeights = { Low: 1, Medium: 2, High: 3 };
     let totalRisk = 0;
     let totalQuantity = 0;
 
-    portfolio.holdings.forEach(holding => {
+    holdings.forEach((holding) => {
       totalRisk += (riskWeights[holding.risk] || 2) * holding.quantity;
       totalQuantity += holding.quantity;
     });
@@ -227,14 +308,22 @@ export function PortfolioProvider({ children }) {
   const value = {
     portfolio,
     isLoaded,
+    // Account mode
+    switchAccountMode,
+    getActiveBalance,
+    getActiveHoldings,
+    getActiveTransactions,
+    getInitialBalance,
+    // Actions
     buyETF,
     sellETF,
+    addRealFunds,
     addParentFunding,
     updateProgress,
     resetPortfolio,
     calculateHoldingsValue,
     calculateRiskScore,
-    INITIAL_BALANCE,
+    INITIAL_BALANCE: getInitialBalance(),
   };
 
   return (

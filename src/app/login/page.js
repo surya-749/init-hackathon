@@ -15,6 +15,10 @@ export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Post-login: account selection step
+  const [loggedInUser, setLoggedInUser] = useState(null);
+  const [step, setStep] = useState("auth"); // "auth" | "select-account"
+
   const getUsers = () => {
     if (typeof window === "undefined") return [];
     return JSON.parse(localStorage.getItem("safestart_users")) || [];
@@ -24,119 +28,178 @@ export default function AuthPage() {
     localStorage.setItem("safestart_users", JSON.stringify(users));
   };
 
+  const toggleMode = () => {
+    setIsLogin(!isLogin);
+    setError("");
+    setPassword("");
+    setConfirmPassword("");
+  };
+
+  const selectAccount = (mode) => {
+    localStorage.setItem("safestart_accountMode", mode);
+    router.push("/dashboard-sim");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
 
-    // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 800));
 
-    const [isLogin, setIsLogin] = useState(true);
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-    const [error, setError] = useState("");
+    const users = getUsers();
 
-    const getUsers = () => {
-      if (typeof window === "undefined") return [];
-      return JSON.parse(localStorage.getItem("users")) || [];
-    };
-
-    const saveUsers = (users) => {
-      localStorage.setItem("users", JSON.stringify(users));
-    };
-
-    function handleSubmit(e) {
-      e.preventDefault();
-      setError("");
-
-      const users = getUsers();
-
-      if (isLogin) {
-        const user = users.find(
-          (u) => u.email === email.trim() && u.password === password.trim()
-        );
-        if (user) {
-          alert("Login Successful!");
-        } else {
-          setError("Invalid email or password!");
-        }
+    if (isLogin) {
+      const user = users.find(
+        (u) => u.email === email.trim() && u.password === password.trim()
+      );
+      if (user) {
+        localStorage.setItem("safestart_currentUser", JSON.stringify(user));
+        setLoggedInUser(user);
+        setStep("select-account");
       } else {
-        if (password !== confirmPassword) {
-          setError("Passwords do not match!");
-          return;
-        }
-        const userExists = users.some((u) => u.email === email.trim());
-        if (userExists) {
-          setError("User already exists!");
-        } else {
-          users.push({ email: email.trim(), password: password.trim() });
-          saveUsers(users);
-          alert("Account created successfully!");
-          setIsLogin(true);
-        }
+        setError("Invalid email or password!");
+      }
+    } else {
+      if (!name.trim()) {
+        setError("Please enter your name!");
+        setIsLoading(false);
+        return;
+      }
+      if (password.length < 6) {
+        setError("Password must be at least 6 characters!");
+        setIsLoading(false);
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError("Passwords do not match!");
+        setIsLoading(false);
+        return;
+      }
+      const userExists = users.some((u) => u.email === email.trim());
+      if (userExists) {
+        setError("User already exists!");
+      } else {
+        const newUser = {
+          name: name.trim(),
+          email: email.trim(),
+          password: password.trim(),
+          virtualBalance: 10000,
+          realBalance: 0,
+        };
+        users.push(newUser);
+        saveUsers(users);
+        setIsLogin(true);
+        setPassword("");
+        setConfirmPassword("");
+        setName("");
+        setError("");
       }
     }
 
+    setIsLoading(false);
+  };
+
+  // ─── Account Selection Screen ───
+  if (step === "select-account") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950">
-        <div className="bg-slate-900/90 p-10 rounded-2xl shadow-xl w-full max-w-sm flex flex-col items-center">
-          <h2 className="text-3xl font-semibold mb-6 text-white tracking-tight font-sans">
-            {isLogin ? "Login" : "Sign Up"}
-          </h2>
-          <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              required
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 rounded-md border border-slate-700 bg-slate-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 transition"
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              required
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 rounded-md border border-slate-700 bg-slate-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 transition"
-            />
-            {!isLogin && (
-              <input
-                type="password"
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                required
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-2 rounded-md border border-slate-700 bg-slate-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 transition"
-              />
-            )}
-            {error && (
-              <p className="text-red-500 text-sm text-center font-medium">{error}</p>
-            )}
-            <button
-              type="submit"
-              className="w-full py-2 mt-2 rounded-md bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-bold text-lg tracking-wide transition"
-            >
-              {isLogin ? "Login" : "Sign Up"}
-            </button>
-          </form>
-          <p className="mt-5 text-gray-400 text-sm">
-            {isLogin ? "New user?" : "Already have an account?"}{" "}
-            <span
-              className="underline cursor-pointer text-blue-600 hover:text-blue-500 font-semibold"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError("");
-              }}
-            >
-              {isLogin ? "Sign Up" : "Login"}
-            </span>
-          </p>
-        </div>
+      <div className="min-h-screen flex flex-col bg-bg-app">
+        <header className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <Link href="/" className="text-xl font-bold text-text-primary tracking-tight">
+            SafeStart
+          </Link>
+        </header>
+
+        <main className="flex-1 flex items-center justify-center px-4 py-12">
+          <div className="w-full max-w-lg">
+            <div className="text-center mb-8">
+              <h1 className="text-2xl font-bold text-text-primary">
+                Welcome, {loggedInUser?.name || "Investor"}!
+              </h1>
+              <p className="text-text-muted text-sm mt-2">
+                Choose which account you&apos;d like to use
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Virtual Account */}
+              <button
+                onClick={() => selectAccount("virtual")}
+                className="group rounded-2xl bg-bg-card border border-border p-6 text-left transition-all hover:border-primary hover:shadow-lg hover:shadow-primary/10"
+              >
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                  <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h2 className="text-lg font-semibold text-text-primary mb-1">
+                  Virtual Account
+                </h2>
+                <p className="text-text-secondary text-sm mb-3">
+                  Practice with virtual money. No risk, pure learning.
+                </p>
+                <div className="flex items-center justify-between">
+                  <span className="text-primary font-bold text-lg">₹10,000</span>
+                  <span className="px-2 py-1 rounded-full bg-success/10 text-success text-xs font-medium">
+                    Virtual
+                  </span>
+                </div>
+                <div className="mt-4 flex items-center text-primary font-medium text-sm group-hover:gap-2 transition-all">
+                  <span>Enter Simulation</span>
+                  <svg className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </button>
+
+              {/* Real Account */}
+              <button
+                onClick={() => selectAccount("real")}
+                className="group rounded-2xl bg-bg-card border border-border p-6 text-left transition-all hover:border-warning hover:shadow-lg hover:shadow-warning/10"
+              >
+                <div className="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center mb-4 group-hover:bg-warning/20 transition-colors">
+                  <svg className="w-6 h-6 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h2 className="text-lg font-semibold text-text-primary mb-1">
+                  Real Account
+                </h2>
+                <p className="text-text-secondary text-sm mb-3">
+                  Invest real money with micro-SIPs starting at ₹10.
+                </p>
+                <div className="flex items-center justify-between">
+                  <span className="text-warning font-bold text-lg">₹0.00</span>
+                  <span className="px-2 py-1 rounded-full bg-warning/10 text-warning text-xs font-medium">
+                    Real
+                  </span>
+                </div>
+                <div className="mt-4 flex items-center text-warning font-medium text-sm group-hover:gap-2 transition-all">
+                  <span>Go to Real Investing</span>
+                  <svg className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </button>
+            </div>
+
+            <p className="text-center text-text-muted text-xs mt-6">
+              You can switch between accounts anytime from the dashboard.
+            </p>
+          </div>
+        </main>
       </div>
     );
+  }
+
+  // ─── Auth Form (Login / Sign Up) ───
+  return (
+    <div className="min-h-screen flex flex-col bg-bg-app">
+      {/* Header */}
+      <header className="flex items-center justify-between px-6 py-4 border-b border-border">
+        <Link href="/" className="text-xl font-bold text-text-primary tracking-tight">
+          SafeStart
+        </Link>
       </header>
 
       {/* Main Content */}
@@ -147,8 +210,18 @@ export default function AuthPage() {
             {/* Logo & Title */}
             <div className="text-center mb-8">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                <svg
+                  className="w-8 h-8 text-primary"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  />
                 </svg>
               </div>
               <h1 className="text-2xl font-bold text-text-primary">
@@ -215,13 +288,38 @@ export default function AuthPage() {
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors"
                   >
                     {showPassword ? (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                        />
                       </svg>
                     ) : (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
                       </svg>
                     )}
                   </button>
@@ -253,8 +351,18 @@ export default function AuthPage() {
               {/* Error Message */}
               {error && (
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-danger/10 border border-danger/20">
-                  <svg className="w-5 h-5 text-danger flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <svg
+                    className="w-5 h-5 text-danger flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                   </svg>
                   <p className="text-danger text-sm">{error}</p>
                 </div>
@@ -268,11 +376,28 @@ export default function AuthPage() {
               >
                 {isLoading ? (
                   <>
-                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    <svg
+                      className="w-5 h-5 animate-spin"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
                     </svg>
-                    <span>{isLogin ? "Signing in..." : "Creating account..."}</span>
+                    <span>
+                      {isLogin ? "Signing in..." : "Creating account..."}
+                    </span>
                   </>
                 ) : (
                   <span>{isLogin ? "Sign In" : "Create Account"}</span>
@@ -280,28 +405,11 @@ export default function AuthPage() {
               </button>
             </form>
 
-            {/* Divider */}
-            <div className="flex items-center gap-4 my-6">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-text-muted text-xs">or</span>
-              <div className="flex-1 h-px bg-border" />
-            </div>
-
-            {/* Demo Login */}
-            <button
-              onClick={() => {
-                setEmail("demo@safestart.com");
-                setPassword("demo123");
-                setIsLogin(true);
-              }}
-              className="w-full py-3 rounded-xl bg-bg-elevated border border-border text-text-secondary font-medium hover:border-primary hover:text-text-primary transition-colors"
-            >
-              Use Demo Account
-            </button>
-
             {/* Toggle Mode */}
             <p className="text-center text-text-muted text-sm mt-6">
-              {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
+              {isLogin
+                ? "Don't have an account?"
+                : "Already have an account?"}{" "}
               <button
                 type="button"
                 onClick={toggleMode}
@@ -314,7 +422,7 @@ export default function AuthPage() {
 
           {/* Privacy Note */}
           <p className="text-center text-text-muted text-xs mt-6">
-            By continuing, you agree to SafeStart's{" "}
+            By continuing, you agree to SafeStart&apos;s{" "}
             <Link href="/terms" className="text-primary hover:underline">
               Terms of Service
             </Link>{" "}
