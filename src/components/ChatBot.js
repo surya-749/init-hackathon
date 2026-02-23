@@ -4,10 +4,10 @@ import { useState, useRef, useEffect } from "react";
 import { usePortfolio } from "@/context/PortfolioContext";
 
 // Suggestion chips based on context
-const getSuggestions = (portfolio, lastTopic) => {
+const getSuggestions = (holdings, lastTopic) => {
   const suggestions = [];
   
-  if (!portfolio || portfolio.holdings.length === 0) {
+  if (!holdings || holdings.length === 0) {
     suggestions.push("How do I start investing?", "What is an ETF?", "What is SIP?");
   } else {
     suggestions.push("Analyze my portfolio", "Am I diversified?", "How to reduce risk?");
@@ -35,7 +35,9 @@ const detectTopic = (message) => {
 };
 
 export default function ChatBot() {
-  const { portfolio, isLoaded } = usePortfolio();
+  const { portfolio, isLoaded, getActiveHoldings, getActiveBalance } = usePortfolio();
+  const activeHoldings = isLoaded ? getActiveHoldings() : [];
+  const activeBalance = isLoaded ? getActiveBalance() : 0;
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
@@ -50,7 +52,7 @@ export default function ChatBot() {
   const [lastTopic, setLastTopic] = useState("");
   const messagesEndRef = useRef(null);
 
-  const suggestions = getSuggestions(isLoaded ? portfolio : null, lastTopic);
+  const suggestions = getSuggestions(isLoaded ? activeHoldings : null, lastTopic);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -82,7 +84,13 @@ export default function ChatBot() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: text.trim(),
-          portfolio: isLoaded ? portfolio : null,
+          portfolio: isLoaded
+            ? {
+                holdings: activeHoldings,
+                virtualBalance: activeBalance,
+                accountMode: portfolio.accountMode,
+              }
+            : null,
           conversationHistory: messages.slice(-6), // Last 6 messages for context
         }),
       });
