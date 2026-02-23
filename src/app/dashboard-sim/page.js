@@ -60,9 +60,13 @@ export default function SimulationDashboard() {
     return total + currentPrice * holding.quantity;
   }, 0);
 
+  const investedValue = activeHoldings.reduce((total, holding) => {
+    return total + holding.avgPrice * holding.quantity;
+  }, 0);
+
   const totalValue = activeBalance + holdingsValue;
-  const totalPnL = totalValue - initialBalance;
-  const pnlPercent = initialBalance > 0 ? ((totalPnL / initialBalance) * 100).toFixed(2) : "0.00";
+  const totalPnL = holdingsValue - investedValue;
+  const pnlPercent = investedValue > 0 ? ((totalPnL / investedValue) * 100).toFixed(2) : "0.00";
 
   const riskScore = calculateRiskScore();
   const riskColor =
@@ -139,6 +143,9 @@ export default function SimulationDashboard() {
               </Link>
               <Link href="/marketplace" className="text-text-muted hover:text-text-primary transition-colors text-sm">
                 Market
+              </Link>
+              <Link href="/leaderboard" className="text-text-muted hover:text-text-primary transition-colors text-sm">
+                Leaderboard
               </Link>
               <Link href="/learn" className="text-text-muted hover:text-text-primary transition-colors text-sm">
                 Learn

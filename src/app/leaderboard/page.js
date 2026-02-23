@@ -1,146 +1,168 @@
-import React from "react";
-import LeaderboardCard from "./LeaderboardCard";
-import StatCard from "./StatCard";
-import LeaderboardTable from "./LeaderboardTable";
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
 
 export default function LeaderboardPage() {
-  // Minimal static dummy data
-  const traders = [
-    {
-      id: 1,
-      name: "Aryan Mehta",
-      role: "Day Trader",
-      alerts: 34,
-      trades: 120,
-      avgGain: 8.2,
-      xScore: 982,
-    },
-    {
-      id: 2,
-      name: "Riya Sharma",
-      role: "Swing Trader",
-      alerts: 28,
-      trades: 110,
-      avgGain: 6.7,
-      xScore: 951,
-    },
-    {
-      id: 3,
-      name: "Kabir Singh",
-      role: "Options Trader",
-      alerts: 22,
-      trades: 98,
-      avgGain: 5.1,
-      xScore: 930,
-    },
-  ];
-  const statHighlights = [
-    {
-      icon: "🔥",
-      title: "Most Active Trader",
-      value: "Aryan Mehta",
-      accent: "border-[#2563EB]",
-    },
-    {
-      icon: "🏆",
-      title: "Highest Win Rate",
-      value: "Riya Sharma",
-      accent: "border-[#22C55E]",
-    },
-    {
-      icon: "⏳",
-      title: "Longest Streak",
-      value: "Kabir Singh",
-      accent: "border-[#FFD700]",
-    },
-    {
-      icon: "🚀",
-      title: "Biggest Rank Jump",
-      value: "Neha Patel",
-      accent: "border-[#EF4444]",
-    },
-  ];
-  const virtualBalance = 1250000;
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        const res = await fetch("/api/leaderboard");
+        const data = await res.json();
+        if (data.success) {
+          setLeaderboard(data.leaderboard);
+        } else {
+          setError(data.message);
+        }
+      } catch (err) {
+        setError("Failed to load leaderboard data.");
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLeaderboard();
+  }, []);
+
+  const getRankColor = (rank) => {
+    if (rank === 1) return "bg-yellow-400 text-yellow-900";
+    if (rank === 2) return "bg-gray-300 text-gray-800";
+    if (rank === 3) return "bg-yellow-600 text-yellow-100";
+    return "bg-bg-elevated text-text-muted";
+  };
+
   return (
-    <div className="min-h-screen bg-[#0B1220] font-[Inter,Poppins,sans-serif] text-[#F9FAFB]">
-      <nav className="flex items-center justify-between px-8 py-4 bg-[#111827]/80 backdrop-blur-lg border-b border-[#1E293B] shadow-lg rounded-b-xl sticky top-0 z-20">
-        <div className="flex items-center gap-4">
-          <span className="text-xl font-bold text-[#2563EB]">SafeStart</span>
+    <div className="min-h-screen bg-bg-app">
+      {/* Header */}
+      <header className="bg-bg-card border-b border-border sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard-sim" className="text-text-muted hover:text-text transition">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </Link>
+            <h1 className="text-xl font-bold text-text">Leaderboard</h1>
+          </div>
+          <div className="flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-lg text-primary font-semibold text-sm">
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+            Live Rankings
+          </div>
         </div>
-        <div className="flex gap-8">
-          <a href="/dashboard" className="hover:text-[#2563EB] transition">Dashboard</a>
-          <a href="/marketplace" className="hover:text-[#2563EB] transition">Market</a>
-          <a href="/leaderboard" className="hover:text-[#2563EB] transition font-semibold">Leaderboard</a>
-          <a href="/learn" className="hover:text-[#2563EB] transition">Learn</a>
-        </div>
-        <div className="flex items-center gap-2 bg-[#1F2937]/60 px-4 py-2 rounded-xl border border-[#1E293B] shadow-md backdrop-blur-md">
-          <span className="text-[#9CA3AF]">Virtual Balance</span>
-          <span className="font-bold text-[#22C55E] text-lg">₹{virtualBalance.toLocaleString()}</span>
-        </div>
-      </nav>
-      <section className="mt-10 mb-6 px-8">
-        <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold">Trading Champions</h1>
-          <span className="text-[#9CA3AF] text-lg">Real-time Performance Rankings</span>
-          <span className="flex items-center gap-1 ml-4 bg-[#1F2937] px-3 py-1 rounded-full text-[#22C55E] font-semibold text-sm">
-            <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse"></span> LIVE
-          </span>
-        </div>
-      </section>
-      <section className="px-8 flex flex-col md:flex-row gap-6">
-        {traders.map((trader, idx) => (
-          <div className="relative flex items-center rounded-xl p-6 mb-4 transition-all duration-300 bg-[#1F2937] border border-[#1E293B]" key={trader.id}>
-            <span className="text-2xl font-bold text-[#2563EB] mr-6">{idx + 1}</span>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <span className="text-xl font-bold text-[#F9FAFB]">{trader.name}</span>
-                <span className="text-sm text-[#9CA3AF] bg-[#1F2937] px-2 py-1 rounded-lg">{trader.role}</span>
-              </div>
-              <div className="flex gap-4 mt-2 text-[#9CA3AF]">
-                <span>Alerts: <span className="text-[#22C55E] font-semibold">{trader.alerts}</span></span>
-                <span>Trades: <span className="text-[#2563EB] font-semibold">{trader.trades}</span></span>
-                <span>Profit Percentage: <span className={trader.avgGain >= 0 ? "text-[#22C55E]" : "text-[#EF4444]"}>{trader.avgGain}%</span></span>
-              </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 py-8">
+        {/* Top 3 Podium */}
+        <section className="mb-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+            {/* 2nd Place */}
+            <div className="order-2 md:order-1 bg-bg-card border border-border rounded-2xl p-6 text-center transform hover:-translate-y-2 transition-transform duration-300">
+              {leaderboard.length > 1 && (
+                <>
+                  <div className="w-24 h-24 rounded-full bg-gray-300/20 mx-auto flex items-center justify-center text-4xl font-bold text-gray-400 mb-3">
+                    {leaderboard[1].name.charAt(0).toUpperCase()}
+                  </div>
+                  <h3 className="text-xl font-bold text-text">{leaderboard[1].name}</h3>
+                  <p className="text-gray-400">2nd Place</p>
+                  <p className={`text-2xl font-bold mt-2 ${leaderboard[1].pnl >= 0 ? "text-success" : "text-danger"}`}>
+                    {leaderboard[1].pnlPercent.toFixed(2)}%
+                  </p>
+                </>
+              )}
             </div>
-            <div className="ml-auto flex flex-col items-end">
-                <span className="bg-[#2563EB] text-white px-4 py-2 rounded-lg font-bold shadow-md">Score: {trader.xScore}</span>
+
+            {/* 1st Place */}
+            <div className="order-1 md:order-2 bg-bg-card border-2 border-yellow-400 rounded-t-2xl p-8 text-center shadow-lg shadow-yellow-400/10 transform hover:-translate-y-4 transition-transform duration-300">
+              {leaderboard.length > 0 && (
+                <>
+                  <div className="w-32 h-32 rounded-full bg-yellow-400/20 mx-auto flex items-center justify-center text-5xl font-bold text-yellow-400 mb-4">
+                    {leaderboard[0].name.charAt(0).toUpperCase()}
+                  </div>
+                  <h2 className="text-2xl font-bold text-text">{leaderboard[0].name}</h2>
+                  <p className="text-yellow-400 font-semibold">1st Place</p>
+                  <p className={`text-3xl font-bold mt-2 ${leaderboard[0].pnl >= 0 ? "text-success" : "text-danger"}`}>
+                    {leaderboard[0].pnlPercent.toFixed(2)}%
+                  </p>
+                </>
+              )}
+            </div>
+
+            {/* 3rd Place */}
+            <div className="order-3 md:order-3 bg-bg-card border border-border rounded-2xl p-6 text-center transform hover:-translate-y-2 transition-transform duration-300">
+              {leaderboard.length > 2 && (
+                <>
+                  <div className="w-24 h-24 rounded-full bg-yellow-600/20 mx-auto flex items-center justify-center text-4xl font-bold text-yellow-700 mb-3">
+                    {leaderboard[2].name.charAt(0).toUpperCase()}
+                  </div>
+                  <h3 className="text-xl font-bold text-text">{leaderboard[2].name}</h3>
+                  <p className="text-yellow-700">3rd Place</p>
+                  <p className={`text-2xl font-bold mt-2 ${leaderboard[2].pnl >= 0 ? "text-success" : "text-danger"}`}>
+                    {leaderboard[2].pnlPercent.toFixed(2)}%
+                  </p>
+                </>
+              )}
             </div>
           </div>
-        ))}
-      </section>
-      <section className="mt-10 px-8 grid grid-cols-2 md:grid-cols-4 gap-6">
-        {statHighlights.map((stat, idx) => (
-          <StatCard key={idx} {...stat} />
-        ))}
-      </section>
-      <section className="mt-12 px-8">
-        <table className="min-w-full rounded-xl bg-[#111827] border border-[#1E293B] text-[#F9FAFB] shadow-lg">
-          <thead className="bg-[#1F2937]">
-            <tr>
-              <th className="py-3 px-4 text-left">Rank</th>
-              <th className="py-3 px-4 text-left">Trader Name</th>
-              <th className="py-3 px-4 text-left">Role</th>
-              <th className="py-3 px-4 text-left">Alerts</th>
-              <th className="py-3 px-4 text-left">Trades</th>
-              <th className="py-3 px-4 text-left">Profit Percentage</th>
-              <th className="py-3 px-4 text-left">Score</th>
-            </tr>
-          </thead>
-          <tbody>
-            {traders.map((trader, idx) => (
-              <tr key={trader.id} className="transition-all duration-200 hover:bg-[#1F2937] border-b border-[#1E293B]">
-                <td className="py-3 px-4 font-bold text-[#2563EB]">{idx + 1}</td>
-                <td className="py-3 px-4 font-semibold">{trader.name}</td>
-                <td className="py-3 px-4 text-[#9CA3AF]">{trader.role}</td>
-                <td className="py-3 px-4">{trader.alerts}</td>
-                <td className="py-3 px-4">{trader.trades}</td>
-                <td className="py-3 px-4"><span className={trader.avgGain >= 0 ? "text-[#22C55E]" : "text-[#EF4444]"}>{trader.avgGain}%</span></td>
-                <td className="py-3 px-4 text-[#2563EB] font-bold">{trader.xScore}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+        </section>
+
+        {/* Full Leaderboard Table */}
+        <section className="bg-bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="p-5 border-b border-border">
+            <h2 className="text-lg font-semibold text-text">Full Rankings</h2>
+          </div>
+          {isLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto" />
+              <p className="text-text-muted mt-2">Loading rankings...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-12 text-danger">{error}</div>
+          ) : (
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-bg-elevated">
+                  <th className="p-4 text-xs text-text-muted font-semibold uppercase tracking-wider">Rank</th>
+                  <th className="p-4 text-xs text-text-muted font-semibold uppercase tracking-wider">Player</th>
+                  <th className="p-4 text-xs text-text-muted font-semibold uppercase tracking-wider text-right">Total Value</th>
+                  <th className="p-4 text-xs text-text-muted font-semibold uppercase tracking-wider text-right">P&L (%)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leaderboard.map((player, index) => (
+                  <tr key={player.id} className="border-t border-border hover:bg-bg-elevated transition-colors">
+                    <td className="p-4">
+                      <span className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold ${getRankColor(index + 1)}`}>
+                        {index + 1}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-lg font-bold text-primary">
+                          {player.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-medium text-text">{player.name}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 text-right font-mono text-text">
+                      ₹{player.totalValue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    </td>
+                    <td className={`p-4 text-right font-mono font-semibold ${player.pnlPercent >= 0 ? "text-success" : "text-danger"}`}>
+                      {player.pnlPercent.toFixed(2)}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+      </main>
     </div>
   );
 }
