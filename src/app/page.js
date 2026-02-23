@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function Home() {
   const router = useRouter();
@@ -9,11 +10,27 @@ export default function Home() {
     <div className="min-h-screen bg-bg-app flex flex-col">
       {/* Header */}
       <header className="p-6">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-            <span className="text-white font-bold text-lg">S</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+              <span className="text-white font-bold text-lg">S</span>
+            </div>
+            <span className="text-text-primary font-semibold text-xl">SafeStart</span>
           </div>
-          <span className="text-text-primary font-semibold text-xl">SafeStart</span>
+          <nav className="flex items-center gap-4">
+            <Link href="/learn" className="text-text-muted hover:text-text-primary transition-colors text-sm">
+              Learn
+            </Link>
+            <Link href="/marketplace" className="text-text-muted hover:text-text-primary transition-colors text-sm">
+              Market
+            </Link>
+            <Link 
+              href="/login" 
+              className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-light transition-colors"
+            >
+              Login
+            </Link>
+          </nav>
         </div>
       </header>
 
@@ -33,7 +50,7 @@ export default function Home() {
         <div className="w-full max-w-2xl grid md:grid-cols-2 gap-6">
           {/* Simulation Mode Card */}
           <button
-            onClick={() => router.push("/simulation")}
+            onClick={() => router.push("/dashboard-sim")}
             className="group relative rounded-2xl bg-bg-card border border-border p-6 text-left transition-all hover:border-primary hover:shadow-lg hover:shadow-primary/10"
           >
             {/* Icon */}
@@ -89,10 +106,9 @@ export default function Home() {
             </div>
           </button>
 
-          {/* Real Mode Card */}
-          <button
-            onClick={() => router.push("/real")}
-            className="group relative rounded-2xl bg-bg-card border border-border p-6 text-left transition-all hover:border-warning hover:shadow-lg hover:shadow-warning/10"
+          {/* Real Mode Card - Locked */}
+          <div
+            className="group relative rounded-2xl bg-bg-card border border-border p-6 text-left transition-all cursor-not-allowed opacity-75"
           >
             {/* Lock Overlay */}
             <div className="absolute inset-0 rounded-2xl bg-bg-app/50 backdrop-blur-[1px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -150,12 +166,12 @@ export default function Home() {
 
             {/* Arrow */}
             <div className="mt-6 flex items-center text-text-muted font-medium text-sm">
-              <span>Unlock After Training</span>
+              <span>Complete Simulation to Unlock</span>
               <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
-          </button>
+          </div>
         </div>
 
         {/* Trust Indicators */}

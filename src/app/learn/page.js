@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 export default function LearnPage() {
   const [expandedStep, setExpandedStep] = useState(0);
@@ -269,36 +270,54 @@ export default function LearnPage() {
   ];
 
   return (
-    <main className="bg-slate-950 text-white">
+    <main className="bg-bg-app text-text-primary min-h-screen">
       {/* Header */}
-      <header className="border-b border-slate-800 sticky top-0 z-50 bg-slate-950/95 backdrop-blur">
+      <header className="border-b border-border sticky top-0 z-50 bg-bg-card">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center font-bold">
-              📚
-            </div>
-            <span className="text-xl font-bold">SafeStart Learn</span>
+          <div className="flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+                <span className="text-white font-bold text-sm">S</span>
+              </div>
+              <span className="text-text-primary font-semibold">SafeStart</span>
+            </Link>
+            <span className="px-2 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+              Learn
+            </span>
           </div>
-          <a
-            href="/login"
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition-colors"
-          >
-            Start Investing
-          </a>
+          <div className="flex items-center gap-6">
+            <nav className="flex items-center gap-6">
+              <Link href="/dashboard-sim" className="text-text-muted hover:text-text-primary transition-colors text-sm">
+                Dashboard
+              </Link>
+              <Link href="/marketplace" className="text-text-muted hover:text-text-primary transition-colors text-sm">
+                Market
+              </Link>
+              <Link href="/learn" className="text-primary font-medium text-sm">
+                Learn
+              </Link>
+            </nav>
+            <Link
+              href="/login"
+              className="px-4 py-2 bg-primary hover:bg-primary-light rounded-lg font-medium text-sm text-white transition-colors"
+            >
+              Login
+            </Link>
+          </div>
         </div>
       </header>
 
       {/* Hero Section */}
       <section className="max-w-6xl mx-auto px-6 py-20 text-center">
         <div className="mb-6">
-          <span className="inline-block px-4 py-2 bg-blue-600/20 border border-blue-500/50 rounded-full text-blue-300 text-sm font-semibold mb-4 hover:bg-blue-600/30 hover:border-blue-400/80 hover:text-blue-200 hover:shadow-lg hover:shadow-blue-500/50 transition-all duration-300 cursor-pointer">
+          <span className="inline-block px-4 py-2 bg-primary/20 border border-primary/50 rounded-full text-primary text-sm font-semibold mb-4 hover:bg-primary/30 hover:border-primary/80 hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 cursor-pointer">
             8 Easy Steps for Teens
           </span>
         </div>
-        <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-          Learn to Invest <span className="text-blue-400">Step by Step</span>
+        <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight text-text-primary">
+          Learn to Invest <span className="text-primary">Step by Step</span>
         </h1>
-        <p className="text-xl text-gray-400 mb-8 max-w-3xl mx-auto">
+        <p className="text-xl text-text-secondary mb-8 max-w-3xl mx-auto">
           No experience needed. Start from ZERO. Follow 8 simple steps to become a confident investor. Perfect for teens with any amount of money.
         </p>
       </section>
