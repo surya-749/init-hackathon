@@ -35,7 +35,14 @@ export async function POST(request) {
     return NextResponse.json(
       {
         message: "Login successful!",
-        user: { id: user._id, name: user.name, email: user.email },
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          virtualBalance: user.virtualBalance,
+          holdings: user.holdings,
+          transactions: user.transactions,
+        },
       },
       { status: 200 }
     );

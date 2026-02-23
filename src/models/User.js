@@ -18,6 +18,42 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: [true, "Password is required"],
     },
+    virtualBalance: {
+      type: Number,
+      default: 10000,
+    },
+    initialBalance: {
+      type: Number,
+      default: 10000,
+    },
+    holdings: {
+      type: Array,
+      default: [],
+    },
+    transactions: {
+      type: Array,
+      default: [],
+    },
+    parentFunded: {
+      type: Boolean,
+      default: false,
+    },
+    parentFundedAmount: {
+      type: Number,
+      default: 0,
+    },
+    completedModules: {
+      type: Number,
+      default: 0,
+    },
+    riskAssessmentPassed: {
+      type: Boolean,
+      default: false,
+    },
+    parentApproved: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
