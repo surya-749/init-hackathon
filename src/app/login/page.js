@@ -45,56 +45,64 @@ export default function AuthPage() {
     setError("");
     setIsLoading(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    try {
+      if (isLogin) {
+        // Login using MongoDB API
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
 
-    const users = getUsers();
+        const data = await res.json();
 
-    if (isLogin) {
-      const user = users.find(
-        (u) => u.email === email.trim() && u.password === password.trim()
-      );
-      if (user) {
-        localStorage.setItem("safestart_currentUser", JSON.stringify(user));
-        setLoggedInUser(user);
-        setStep("select-account");
+        if (res.ok) {
+          localStorage.setItem("safestart_currentUser", JSON.stringify(data.user));
+          setLoggedInUser(data.user);
+          setStep("select-account");
+        } else {
+          setError(data.message || "Invalid email or password!");
+        }
       } else {
-        setError("Invalid email or password!");
+        // Signup validation
+        if (!name.trim()) {
+          setError("Please enter your name!");
+          setIsLoading(false);
+          return;
+        }
+        if (password.length < 6) {
+          setError("Password must be at least 6 characters!");
+          setIsLoading(false);
+          return;
+        }
+        if (password !== confirmPassword) {
+          setError("Passwords do not match!");
+          setIsLoading(false);
+          return;
+        }
+
+        // Signup using MongoDB API
+        const res = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          setIsLogin(true);
+          setPassword("");
+          setConfirmPassword("");
+          setName("");
+          setError("");
+        } else {
+          setError(data.message || "Signup failed!");
+        }
       }
-    } else {
-      if (!name.trim()) {
-        setError("Please enter your name!");
-        setIsLoading(false);
-        return;
-      }
-      if (password.length < 6) {
-        setError("Password must be at least 6 characters!");
-        setIsLoading(false);
-        return;
-      }
-      if (password !== confirmPassword) {
-        setError("Passwords do not match!");
-        setIsLoading(false);
-        return;
-      }
-      const userExists = users.some((u) => u.email === email.trim());
-      if (userExists) {
-        setError("User already exists!");
-      } else {
-        const newUser = {
-          name: name.trim(),
-          email: email.trim(),
-          password: password.trim(),
-          virtualBalance: 10000,
-          realBalance: 0,
-        };
-        users.push(newUser);
-        saveUsers(users);
-        setIsLogin(true);
-        setPassword("");
-        setConfirmPassword("");
-        setName("");
-        setError("");
-      }
+    } catch (err) {
+      console.error("Auth error:", err);
+      setError("Something went wrong. Please try again.");
     }
 
     setIsLoading(false);
