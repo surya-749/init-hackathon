@@ -21,7 +21,7 @@ export default function LearnPage() {
             <strong>Investing means using your money to buy something that can grow in value over time.</strong>
           </p>
           <div className="bg-slate-800/50 border-l-4 border-blue-500 p-4 rounded">
-            <p className="text-gray-300 mb-3">💰 <strong>Instead of just saving money, you're putting it to work.</strong></p>
+            <p className="text-gray-300 mb-3">💰 <strong>Instead of just saving money, you&apos;re putting it to work.</strong></p>
             <div className="space-y-2">
               <p className="text-gray-400">✓ You buy part of a company</p>
               <p className="text-gray-400">✓ If the company grows, your money grows too</p>
@@ -71,7 +71,7 @@ export default function LearnPage() {
       fullContent: (
         <div className="space-y-4">
           <p className="text-gray-300">
-            <strong>You don't need a lot of money to start investing!</strong>
+            <strong>You don&apos;t need a lot of money to start investing!</strong>
           </p>
 
           <div className="bg-slate-800/50 border-l-4 border-green-500 p-4 rounded">
@@ -151,8 +151,8 @@ export default function LearnPage() {
           <div className="bg-red-600/20 border border-red-500/50 p-4 rounded">
             <p className="text-red-500 font-bold mb-3">❌ AVOID THESE:</p>
             <div className="space-y-2 text-gray-300">
-              <p>🚫 "Get rich quick" investments (SCAM!)</p>
-              <p>🚫 Crypto trends you don't understand</p>
+              <p>🚫 &quot;Get rich quick&quot; investments (SCAM!)</p>
+              <p>🚫 Crypto trends you don&apos;t understand</p>
               <p>🚫 Risky day trading (gambling, not investing)</p>
               <p>🚫 Stock tips from social media</p>
             </div>
@@ -186,7 +186,7 @@ export default function LearnPage() {
           <div className="bg-blue-600/20 border border-blue-500/50 p-4 rounded">
             <p className="text-blue-300 font-bold mb-2">📈 Dollar-Cost Averaging</p>
             <p className="text-gray-300 text-sm">
-              This strategy means investing the same amount regularly, no matter if prices are high or low. It helps reduce risk over time and removes the stress of "picking the perfect moment."
+              This strategy means investing the same amount regularly, no matter if prices are high or low. It helps reduce risk over time and removes the stress of &quot;picking the perfect moment.&quot;
             </p>
           </div>
 
@@ -202,7 +202,7 @@ export default function LearnPage() {
       fullContent: (
         <div className="space-y-4">
           <p className="text-gray-300">
-            <strong>The market goes UP and DOWN — that's NORMAL and HEALTHY.</strong>
+            <strong>The market goes UP and DOWN — that&apos;s NORMAL and HEALTHY.</strong>
           </p>
 
           <div className="bg-slate-800/50 border-l-4 border-amber-500 p-4 rounded">
@@ -254,8 +254,8 @@ export default function LearnPage() {
           <div className="bg-blue-600/20 border border-blue-500/50 p-4 rounded">
             <p className="text-blue-300 font-bold mb-2">Recommended Resources:</p>
             <div className="space-y-1 text-gray-300 text-sm">
-              <p>📚 "The Compound Effect" by Darren Hardy</p>
-              <p>📚 "Money Master the Game" by Tony Robbins</p>
+              <p>📚 &quot;The Compound Effect&quot; by Darren Hardy</p>
+              <p>📚 &quot;Money Master the Game&quot; by Tony Robbins</p>
               <p>📺 Graham Stephan (YouTube)</p>
               <p>🎧 BiggerPockets Money Podcast</p>
             </div>
@@ -353,7 +353,7 @@ export default function LearnPage() {
         <div className="bg-linear-to-r from-blue-600/20 to-blue-700/20 border-2 border-blue-600/50 rounded-xl p-8 md:p-12 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">You Have Everything You Need to Start</h2>
           <p className="text-lg text-gray-300 mb-8 max-w-2xl mx-auto">
-            You don't need:
+            You don&apos;t need:
           </p>
           <div className="grid md:grid-cols-3 gap-4 mb-8">
             <div className="text-center">
@@ -381,9 +381,9 @@ export default function LearnPage() {
         <p className="text-xl text-gray-400 mb-10">
           Open your free simulation account and practice investing risk-free today.
         </p>
-        <button className="px-10 py-4 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold text-lg transition-colors shadow-lg hover:shadow-blue-500/30">
-          Start Learning Now
-        </button>
+        <Link href="/dashboard-sim" className="inline-block px-10 py-4 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold text-lg transition-colors shadow-lg hover:shadow-blue-500/30">
+          Start Investing Now
+        </Link>
       </section>
 
       {/* Footer */}

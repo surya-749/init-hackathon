@@ -17,6 +17,7 @@ export default function SimulationDashboard() {
     getActiveHoldings,
     getActiveTransactions,
     getInitialBalance,
+    addParentFunding,
   } = usePortfolio();
 
   const accountMode = portfolio.accountMode || "virtual";
@@ -66,6 +67,14 @@ export default function SimulationDashboard() {
   }, 0);
 
   const totalValue = activeBalance + holdingsValue;
+
+  // Handler for adding virtual money
+  const handleAddMoney = () => {
+    // Only allow in virtual mode
+    if (accountMode === "virtual") {
+      addParentFunding(1000); // Add ₹1000 each time
+    }
+  };
   const totalPnL = holdingsValue - investedValue;
   const pnlPercent = investedValue > 0 ? ((totalPnL / investedValue) * 100).toFixed(2) : "0.00";
 
@@ -120,7 +129,7 @@ export default function SimulationDashboard() {
         </div>
 
         {/* Portfolio Overview Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {/* Total Value */}
           <div className="rounded-xl bg-bg-card border border-border p-4">
             <p className="text-text-muted text-xs mb-1">Portfolio Value</p>
@@ -146,6 +155,24 @@ export default function SimulationDashboard() {
             <p className="text-2xl font-bold text-text-primary">
               ₹{holdingsValue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
             </p>
+          </div>
+
+          {/* Balance */}
+          <div className="rounded-xl bg-bg-card border border-border p-4 flex flex-col justify-between">
+            <div>
+              <p className="text-text-muted text-xs mb-1">Balance</p>
+              <p className="text-2xl font-bold text-primary">
+                ₹{activeBalance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            {accountMode === "virtual" && (
+              <button
+                onClick={handleAddMoney}
+                className="mt-2 px-3 py-1 rounded bg-success/10 text-success text-xs font-semibold hover:bg-success/20 transition"
+              >
+                + Add Money
+              </button>
+            )}
           </div>
 
           {/* Risk Meter */}
