@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -72,12 +72,17 @@ function shuffle(arr) {
 
 export default function Page() {
   const router = useRouter()
-  const [quiz, setQuiz] = useState(() => shuffle(BANK).slice(0, 10))
+  const [quiz, setQuiz] = useState(BANK.slice(0, 10))
   const [answers, setAnswers] = useState({})
   const [submitted, setSubmitted] = useState(false)
   const [score, setScore] = useState(null)
   const [willRedirect, setWillRedirect] = useState(false)
   const [errMsg, setErrMsg] = useState('')
+
+  // Shuffle questions on client only to avoid hydration mismatch
+  useEffect(() => {
+    setQuiz(shuffle(BANK).slice(0, 10))
+  }, [])
 
   const restart = () => {
     setQuiz(shuffle(BANK).slice(0, 10))
